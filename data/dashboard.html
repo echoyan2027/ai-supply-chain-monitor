@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 产业链监控 — 6 信号跟踪</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container { max-width: 1280px; margin: 0 auto; }
+
+/* Header */
+.header {
+    text-align: center;
+    padding: 24px 0 32px;
+    border-bottom: 1px solid #1e293b;
+    margin-bottom: 24px;
+}
+.header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+.header p { color: #94a3b8; font-size: 14px; }
+
+/* Stage Panel */
+.stage-panel {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border: 1px solid #334155;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    border-left: 6px solid #f59e0b;
+}
+.stage-label {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: #f59e0b;
+}
+.stage-advice {
+    font-size: 16px;
+    line-height: 1.6;
+    color: #cbd5e1;
+    margin-bottom: 16px;
+}
+.stage-code {
+    display: inline-block;
+    background: #334155;
+    color: #94a3b8;
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-family: monospace;
+}
+
+/* Light Summary */
+.light-summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+}
+.light-item {
+    background: #1e293b;
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    border-left: 4px solid #6b7280;
+}
+.light-item.red { border-left-color: #ef4444; }
+.light-item.yellow { border-left-color: #f59e0b; }
+.light-item.green { border-left-color: #10b981; }
+.light-item .count { font-size: 32px; font-weight: 700; }
+.light-item .label { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+.light-item.red .count { color: #ef4444; }
+.light-item.yellow .count { color: #f59e0b; }
+.light-item.green .count { color: #10b981; }
+.light-item.gray .count { color: #6b7280; }
+
+/* Metrics Grid */
+.metrics-section {
+    margin-top: 32px;
+}
+.section-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    padding-left: 12px;
+    border-left: 4px solid #6366f1;
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+/* Metric Card */
+.metric-card {
+    background: #1e293b;
+    border-radius: 12px;
+    padding: 20px;
+    border-left: 4px solid #6b7280;
+    transition: transform 0.2s;
+}
+.metric-card.red { border-left-color: #ef4444; }
+.metric-card.yellow { border-left-color: #f59e0b; }
+.metric-card.green { border-left-color: #10b981; }
+.metric-card:hover { transform: translateY(-2px); }
+
+.metric-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+.metric-name { font-size: 16px; font-weight: 600; }
+.metric-name-en { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+.signal-role-badge {
+    display: inline-block;
+    background: #6366f1;
+    color: #fff;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 8px;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+.status-badge {
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 8px;
+    font-weight: 600;
+}
+.status-badge.red { background: #ef4444; color: #fff; }
+.status-badge.yellow { background: #f59e0b; color: #fff; }
+.status-badge.green { background: #10b981; color: #fff; }
+.status-badge.gray { background: #6b7280; color: #fff; }
+
+.metric-value {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 8px 0;
+}
+.metric-desc {
+    font-size: 12px;
+    color: #cbd5e1;
+    line-height: 1.5;
+    margin-top: 8px;
+    margin-bottom: 12px;
+}
+.metric-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+.metric-meta .tag {
+    font-size: 10px;
+    background: #0f172a;
+    color: #94a3b8;
+    padding: 3px 8px;
+    border-radius: 8px;
+}
+
+.chart-container {
+    width: 100%;
+    height: 80px;
+    margin-top: 8px;
+}
+
+/* Footer */
+.footer {
+    text-align: center;
+    padding: 32px 0 16px;
+    color: #64748b;
+    font-size: 12px;
+    border-top: 1px solid #1e293b;
+    margin-top: 48px;
+}
+.footer a { color: #94a3b8; text-decoration: none; }
+.footer a:hover { color: #cbd5e1; }
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    body { padding: 12px; }
+    .header h1 { font-size: 20px; }
+    .stage-label { font-size: 18px; }
+    .stage-advice { font-size: 14px; }
+    .light-summary { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .light-item .count { font-size: 24px; }
+    .metrics-grid { grid-template-columns: 1fr; gap: 12px; }
+    .metric-card { padding: 14px; }
+    .metric-value { font-size: 22px; }
+    .metric-desc { font-size: 11px; }
+    .chart-container { height: 60px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="header">
+    <h1>AI 产业链监控 — 6 信号跟踪</h1>
+    <p>华泰证券 6 信号框架 · 阶段判断 + 环节轮动 · 数据更新: 2026-08-06</p>
+</div>
+
+<!-- 阶段判断面板 (华泰两阶段框架) -->
+<div class="stage-panel">
+    <div class="stage-label">业绩弹性消化中 (资金已松动, 基本面待验证)</div>
+    <div class="stage-advice">估值超调后反弹能见度提升. 等待 8 月中报确认 TTM 二阶导是否拐头, 或新需求场景 (应用落地/政策利好) 拉动. 主线跑输 -2σ 以下, 适度建仓业绩能见度高的环节</div>
+    <span class="stage-code">stage_1_digest</span>
+</div>
+
+<!-- 红黄绿灰汇总 -->
+<div class="light-summary">
+    <div class="light-item red">
+        <div class="count">3</div>
+        <div class="label">🔴 红灯</div>
+    </div>
+    <div class="light-item yellow">
+        <div class="count">0</div>
+        <div class="label">🟡 黄灯</div>
+    </div>
+    <div class="light-item green">
+        <div class="count">3</div>
+        <div class="label">🟢 绿灯</div>
+    </div>
+    <div class="light-item gray">
+        <div class="count">0</div>
+        <div class="label">⚪ 灰灯</div>
+    </div>
+</div>
+
+<!-- 6 信号卡片 -->
+<div class="metrics-section">
+    <div class="section-title">6 信号 (华泰 2026-08-06 框架)</div>
+    <div class="metrics-grid" id="metrics-grid"></div>
+</div>
+
+<div class="footer">
+    <p>数据源: 腾讯 K 线 (A 股 ETF) · SEC EDGAR XBRL · 新浪财经 K 线</p>
+    <p>参照华泰证券《AI 行情的两阶段演绎推演》(2026-08-06) · 单一指标不作为独立执行依据, 共振时置信度更高</p>
+    <p style="margin-top: 8px;">最后更新: 2026-08-06</p>
+</div>
+
+</div>
+
+<script>
+const metrics = [{"metric_key": "ttm_2nd_deriv", "signal_role": "1", "name_zh": "TTM 净利二阶导", "name_en": "TTM Net Income 2nd Derivative", "unit": "pp", "alert_value": 0, "danger_value": -5, "source": "SEC EDGAR XBRL (5 家 AI 硬件)", "direction": "lower_is_better", "update_freq": "quarterly", "category": "industry", "desc": "TTM 净利同比的二阶导 (差分). 9.5pp 拐点对应新能源 2021 年中报 二阶导 = TTM 同比(t) - TTM 同比(t-1). 9.5pp 是华泰报告观察的 2021 新能源拐点值", "value": 0.7304898123849881, "obs_date": "2026-03-31", "obs_period": null, "status": "green", "source_url": "sec_edgar_ttm"}, {"metric_key": "capex_2nd_deriv", "signal_role": "2", "name_zh": "CSP Capex 二阶导", "name_en": "CSP Capex 2nd Derivative (TTM YoY)", "unit": "pp", "alert_value": 0, "danger_value": -10, "source": "SEC EDGAR XBRL (MSFT/AMZN/GOOGL/META)", "direction": "lower_is_better", "update_freq": "quarterly", "category": "industry", "desc": "MSFT/AMZN/GOOGL/META 季度 Capex 同比的二阶导 二阶导 = Capex 同比(t) - 同比(t-1). 华泰报告: 3Q26 或为高点", "value": 5.757685918650012, "obs_date": "2026-03-31", "obs_period": null, "status": "green", "source_url": "sec_edgar_capex_ttm"}, {"metric_key": "copper_clad_mom", "signal_role": "3", "name_zh": "覆铜板 MOM (生益科技代理)", "name_en": "Copper Clad MoM (Shengyi Tech Proxy)", "unit": "%", "alert_value": 0, "danger_value": -10, "source": "新浪/腾讯 K 线 (600183.SH 前复权)", "direction": "lower_is_better", "update_freq": "daily", "category": "industry", "desc": "生益科技 (600183.SH) 月环比 (前复权). 覆铜板板块情绪代理, 股价 MOM 领先实物商品价 1-2 个月 (华泰 2020-22 新能源案例)", "value": -39.07727797001154, "obs_date": "2026-07-31", "obs_period": null, "status": "red", "source_url": "sina_kline_生益科技"}, {"metric_key": "earnings_surprise", "signal_role": "1-衍生", "name_zh": "业绩季超额收益 (主线 - 非主线)", "name_en": "Earnings Season Excess Return", "unit": "pp", "alert_value": -5, "danger_value": -10, "source": "腾讯 K 线 (财报披露季窗口)", "direction": "lower_is_better", "update_freq": "quarterly", "category": "industry", "desc": "中报/年报披露季 (4-5月 / 7-8月) 半导体 ETF 超额收益. 正值 = 正面反应 (定价有空间), 负值 = 钝化/负面 (定价充分)", "value": -59.022821539468815, "obs_date": "2026-08-31", "obs_period": null, "status": "red", "source_url": "tencent_kline"}, {"metric_key": "crowding_zscore", "signal_role": "5", "name_zh": "拥挤度 (主线 vs 非主线 z-score)", "name_en": "Crowding Z-Score (Mainline vs Non-Mainline)", "unit": "σ", "alert_value": 1, "danger_value": 2, "source": "腾讯 K 线 (sh159995 vs sh510310)", "direction": "higher_is_better", "update_freq": "daily", "category": "market", "desc": "(主线 3 月涨幅 - 非主线 3 月涨幅) / 滚动 1 年 std z = (3 月涨幅差 - 1 年均值) / 1 年 std. AI 当前 +4σ (2026-06)", "value": -2.3734671574580894, "obs_date": "2026-08-06", "obs_period": null, "status": "green", "source_url": "tencent_kline"}, {"metric_key": "sharpe_120d", "signal_role": "6", "name_zh": "主线 120 日夏普比", "name_en": "Mainline 120d Rolling Sharpe", "unit": "x", "alert_high": 2.0, "alert_low": 0.5, "danger_high": 2.5, "danger_low": 0.0, "source": "腾讯 K 线 (sh159995 日对数收益)", "direction": "two_sided", "update_freq": "daily", "category": "market", "desc": "AI 硬件主线 120 日滚动夏普. 突破 2 = 抱团, 跌破 1 = 松动 双向危险: 突破 2 = 抱团, 跌破 1 = 松动", "value": -0.8647102476925702, "obs_date": "2026-08-06", "obs_period": null, "status": "red", "source_url": "tencent_kline"}];
+const chartData = [{"key": "ttm_2nd_deriv", "name_zh": "TTM 净利二阶导", "history": [{"date": "2026-03-31", "value": 0.7304898123849881}, {"date": "2026-03-31", "value": 0.7304898123849881}], "current_value": 0.7304898123849881, "unit": "pp", "status": "green"}, {"key": "capex_2nd_deriv", "name_zh": "CSP Capex 二阶导", "history": [{"date": "2026-03-31", "value": 5.757685918650012}, {"date": "2026-03-31", "value": 5.757685918650012}], "current_value": 5.757685918650012, "unit": "pp", "status": "green"}, {"key": "copper_clad_mom", "name_zh": "覆铜板 MOM (生益科技代理)", "history": [{"date": "2026-07-31", "value": -39.07727797001154}, {"date": "2026-07-31", "value": -39.07727797001154}, {"date": "2026-07-31", "value": -39.07727797001154}], "current_value": -39.07727797001154, "unit": "%", "status": "red"}, {"key": "earnings_surprise", "name_zh": "业绩季超额收益 (主线 - 非主线)", "history": [{"date": "2026-08-31", "value": -59.022821539468815}, {"date": "2026-08-31", "value": -59.022821539468815}], "current_value": -59.022821539468815, "unit": "pp", "status": "red"}, {"key": "crowding_zscore", "name_zh": "拥挤度 (主线 vs 非主线 z-score)", "history": [{"date": "2026-08-06", "value": -2.3734671574580894}, {"date": "2026-08-06", "value": -2.3734671574580894}], "current_value": -2.3734671574580894, "unit": "σ", "status": "green"}, {"key": "sharpe_120d", "name_zh": "主线 120 日夏普比", "history": [{"date": "2026-08-06", "value": -0.8647102476925702}, {"date": "2026-08-06", "value": -0.8647102476925702}], "current_value": -0.8647102476925702, "unit": "x", "status": "red"}];
+
+const STATUS_LABEL = {
+    red: '🔴 红灯',
+    yellow: '🟡 黄灯',
+    green: '🟢 绿灯',
+    gray: '⚪ 灰灯',
+};
+
+function formatValue(val, unit) {
+    if (val === null || val === undefined) return '—';
+    if (Math.abs(val) >= 100) return val.toFixed(1);
+    if (Math.abs(val) >= 10) return val.toFixed(2);
+    return val.toFixed(3);
+}
+
+function renderCard(metric) {
+    const status = metric.status || 'gray';
+    return `
+        <div class="metric-card ${status}">
+            <div class="metric-header">
+                <div>
+                    <div class="metric-name">
+                        ${metric.name_zh}
+                        <span class="signal-role-badge">信号 ${metric.signal_role}</span>
+                    </div>
+                    <div class="metric-name-en">${metric.name_en}</div>
+                </div>
+                <span class="status-badge ${status}">${STATUS_LABEL[status]}</span>
+            </div>
+            <div class="metric-value">
+                ${formatValue(metric.value, metric.unit)}
+                <span style="font-size: 14px; color: #94a3b8; font-weight: 400;">${metric.unit || ''}</span>
+            </div>
+            <div class="metric-desc">${metric.desc}</div>
+            <div class="metric-meta">
+                <span class="tag">来源: ${metric.source}</span>
+                <span class="tag">频率: ${metric.update_freq}</span>
+                <span class="tag">观测: ${metric.obs_date || '—'}</span>
+            </div>
+            <div class="chart-container" id="chart-${metric.metric_key}"></div>
+        </div>
+    `;
+}
+
+document.getElementById('metrics-grid').innerHTML = metrics.map(renderCard).join('');
+
+// 简易 SVG 折线图
+function renderChart(container, data, unit) {
+    if (!data || data.length < 2) {
+        container.innerHTML = '<div style="text-align: center; color: #64748b; font-size: 11px; padding: 30px 0;">数据收集中...</div>';
+        return;
+    }
+    const w = container.clientWidth || 280;
+    const h = 70;
+    const padding = 4;
+    const values = data.map(d => d.value);
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const range = max - min || 1;
+    const stepX = (w - 2 * padding) / (data.length - 1);
+    const points = data.map((d, i) => {
+        const x = padding + i * stepX;
+        const y = h - padding - ((d.value - min) / range) * (h - 2 * padding);
+        return `${x},${y}`;
+    }).join(' ');
+
+    const lastPoint = data[data.length - 1];
+    const lastX = padding + (data.length - 1) * stepX;
+    const lastY = h - padding - ((lastPoint.value - min) / range) * (h - 2 * padding);
+
+    container.innerHTML = `
+        <svg width="${w}" height="${h}" style="display: block;">
+            <polyline points="${points}"
+                fill="none"
+                stroke="#6366f1"
+                stroke-width="1.5" />
+            <circle cx="${lastX}" cy="${lastY}" r="3" fill="#6366f1" />
+        </svg>
+    `;
+}
+
+setTimeout(() => {
+    chartData.forEach(cd => {
+        const el = document.getElementById('chart-' + cd.key);
+        if (el) renderChart(el, cd.history, cd.unit);
+    });
+}, 100);
+window.addEventListener('resize', () => {
+    chartData.forEach(cd => {
+        const el = document.getElementById('chart-' + cd.key);
+        if (el) renderChart(el, cd.history, cd.unit);
+    });
+});
+</script>
+</body>
+</html>
